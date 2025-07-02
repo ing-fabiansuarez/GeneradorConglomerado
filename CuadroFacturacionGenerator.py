@@ -4,32 +4,32 @@ from datetime import datetime
 import locale
 
 class CuadroFacturacionGenerator:
-    def __init__(self):
-        self._configurar_locale()
-
-    def _configurar_locale(self):
-        # Establecer idioma español para los nombres de los meses
-        try:
-            locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')  # Para Linux/macOS
-        except locale.Error:
-            locale.setlocale(locale.LC_TIME, 'Spanish_Spain.1252')  # Para Windows
+  
 
     def _formatear_fechas(self, fechas):
         fechas_ordenadas = sorted(fechas, key=lambda x: datetime.strptime(x, "%Y-%m-%d"))
         fechas_dict = defaultdict(list)
-        
+
+        meses_es = {
+            "January": "enero", "February": "febrero", "March": "marzo",
+            "April": "abril", "May": "mayo", "June": "junio",
+            "July": "julio", "August": "agosto", "September": "septiembre",
+            "October": "octubre", "November": "noviembre", "December": "diciembre"
+        }
+
         for fecha in fechas_ordenadas:
             dt = datetime.strptime(fecha, "%Y-%m-%d")
-            mes = dt.strftime("%B")  # Nombre del mes en inglés
+            mes = dt.strftime("%B")
             dia = str(dt.day)
             fechas_dict[mes].append(dia)
-        
+
         fechas_formateadas = []
         for mes, dias in fechas_dict.items():
-            mes_es = datetime.strptime(mes, "%B").strftime("%B").capitalize()
+            mes_es = meses_es.get(mes, mes)
             fechas_formateadas.append(f"{', '.join(dias)} {mes_es}")
-        
+
         return ", ".join(fechas_formateadas)
+
 
     def generar(self, conglomerado_path, output_path):
         df = pd.read_excel(conglomerado_path, sheet_name="CONGLOMERADO", engine="openpyxl")
