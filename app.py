@@ -3,6 +3,7 @@ import pandas as pd
 import tempfile
 import os
 from CuadroFacturacionGenerator import CuadroFacturacionGenerator
+import auditoria_manager
 
 st.set_page_config(page_title="Generador de Cuadro de Facturación", layout="centered")
 
@@ -20,6 +21,13 @@ if uploaded_file:
         df_preview = pd.read_excel(temp_input_path, sheet_name="CONGLOMERADO", engine="openpyxl")
         nombres_profesionales = sorted(df_preview["NOMBRE DEL PROFESIONAL"].dropna().unique())
 
+        #Registrar carga del archivo
+        auditoria_manager.registrar_carga_archivo(
+            uploaded_file.name,
+            len(nombres_profesionales),
+            nombres_profesionales
+        )
+
         nombre_seleccionado = st.selectbox("👤 Selecciona el profesional:", nombres_profesionales)
 
         if nombre_seleccionado and st.button("🚀 Generar archivo"):
@@ -32,9 +40,20 @@ if uploaded_file:
 
                 generador.generar_filtrado_por_profesional(temp_input_path, temp_output_path, [nombre_seleccionado])
 
+            # Registrar ANTES de mostrar el botón de descarga
+            auditoria_manager.registrar_descarga(
+                nombre_profesional=nombre_seleccionado,
+                nombre_archivo="",
+                info_adicional={
+                    "archivo_origen": uploaded_file.name,
+                    "num_registros": len(df_preview)
+                }
+            )
             st.success("✅ Archivo generado. Descárgalo a continuación:")
 
             with open(temp_output_path, "rb") as f:
+                archivo_bytes = f.read()
+
                 st.download_button(
                     label=f"📥 Descargar {nombre_seleccionado}",
                     data=f,
